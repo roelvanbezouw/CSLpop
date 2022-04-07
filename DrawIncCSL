@@ -1,0 +1,11 @@
+#### DrawIncCSL
+#
+# Lines = a SimLib input file. Note that the file may include columns representing phenotypes
+# y = the number of random lines to draw from the population. Note that p1 (all chromosomes 0) and p2 (all chromosomes 1) are always included (hence, to generate a population of size 16 of the 32 possible lines in Arabidopsis thaliana, one must use y = 14).
+
+DrawIncCSL<- function(Lines, y = nrow(Lines)) {
+		n <- ncol(Lines)
+		Y <- ifelse(y > (nrow(Lines)-2), y <- (nrow(Lines)-2), round(y)) 
+		Select <- Lines[c(1, sample(2:(nrow(Lines)-1), Y, replace = FALSE), nrow(Lines)), ]
+		return(Select[order(Select$CSL),])
+}
