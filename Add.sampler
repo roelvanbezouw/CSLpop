@@ -1,0 +1,41 @@
+#### Add.sampler
+#  Sample = the number of lines (with respective phenotypes) to draw from the population
+#  database = a CSL population with at least one phenotype (a SimLib file)
+#  trait = Any trait column
+#  nchr = the number of chromosomes in the population
+#  iter = the number of random populations drawn
+
+Add.sampler<- function(Sample = 1, database = Pop, trait = 7, nchr = 5, iter = 1000) {
+P.values<<- list()
+for (i in c(1:iter)) {
+	p.outcome<<- c()
+	Draw <<- DrawIncCSL(database, y = Sample)
+	for (p in 2:(nchr+1)) {#the Chr columns
+		AoV<<- AOV3(unlist(Draw[[trait]]) ~ as.factor(Draw[[p]]))
+		p.outcome<<- c(p.outcome, -log(AoV["Pr(>F)"][[1]][[2]],10))
+	}
+	Val <- list(p.outcome)
+P.values<<- c(P.values, Val)
+	Sigs <- as.data.frame((do.call(cbind, P.values)))
+}
+
+Sigs <- as.data.frame(t(Sigs))
+
+p95 <- c()
+meanp<- c()
+stdev<- c()
+for (i in 1:ncol(Sigs)) {
+	stdev<- c(stdev, sd(Sigs[[i]]))
+	meanp<- c(meanp, mean(Sigs[[i]]))
+	p95 <- c(p95, sum(Sigs[[i]]>-log(0.05,10))/nrow(Sigs)*100)
+}	
+Results<- data.frame(t(Sigs))
+Results$STDEV<- stdev
+Results$P95 <- p95
+Results$MEANP<- meanp
+Results <- data.frame(t(Results))
+return(Results[(nrow(Results)-2):(nrow(Results)),])
+}
+
+# STDEV = the standard deviation of the logarithm of the odds of the model outcomes
+#
