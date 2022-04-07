@@ -1,0 +1,22 @@
+#### SimLib	
+#
+# n = the desired full population to be generated of size 2n = X
+
+SimLib<- function(n) {
+	l <- rep(list(0:1), n)
+	Lines <- expand.grid(l)
+	LineNames<- function(n) {
+		Names = NULL
+		for (i in 1:n) {
+		Names <- append(Names, paste("C", i, sep = ""))
+			}
+		return(Names)
+	}
+	names(Lines) <- LineNames(ncol(Lines))
+	CSL <- c(1:nrow(Lines))
+	Lines <- data.frame(CSL, Lines)
+	return(Lines)
+}
+
+# Output generates a dataframe encompassing all possible lines from a cross between two genotypes of a 
+# species containing the desired number of chromosomes.
