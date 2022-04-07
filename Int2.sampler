@@ -1,0 +1,49 @@
+Int2.sampler <- function(Sample = 5, database = Pop, trait = 11, nchr = 5, iter = 10) {
+P.values<<- list()
+for (i in c(1:iter)) {
+	p.outcome<- c()
+	Draw <<- DrawIncCSL(database, y = Sample)
+	for (p in 2:(nchr)) {	#the Chr columns
+		for (q in p:(nchr)+1) {
+			if (q != p) {
+				summer <<- summary(aov(Draw[[trait]]~ as.factor(Draw[[p]]) * as.factor(Draw[[q]])))
+				if (length(summer[[1]][["Pr(>F)"]]) < 4) {
+					p.outcome<- c(p.outcome, NA)
+				} else {
+					p.outcome<- c(p.outcome, -log(summer[[1]][["Pr(>F)"]][[3]],10))
+		}}
+	}}
+	Val <<- list(p.outcome)
+P.values<<- c(P.values, Val)
+	Sigs <- as.data.frame((do.call(cbind, P.values)))
+}
+
+Sigs <- as.data.frame(t(Sigs))
+
+nna<- c()
+p95 <- c()
+p95_BF <- c()
+meanp<- c()
+stdev<- c()
+for (i in 1:ncol(Sigs)) {
+	nna<- c(nna, sum(is.na(Sigs[[i]])))
+	stdev<- c(stdev, sd(Sigs[[i]], na.rm=TRUE))
+	meanp<- c(meanp, mean(Sigs[[i]], na.rm=TRUE))
+	Sigs[[i]][is.na(Sigs[[i]])] <- 0
+	p95 <- c(p95, sum(Sigs[[i]]>-log(0.05,10))/nrow(Sigs)*100)
+	p95_BF <- <- c(p95, sum(Sigs[[i]]>-log(0.05/ncol(Sigs),10))/nrow(Sigs)*100)
+
+}
+
+Results <- data.frame(t(Sigs))
+Results$STDEV<- stdev
+Results$P95 <- p95
+Results$P95_BF<- p95_BF
+Results$MEANP<- meanp
+Results$NNA<- nna
+Results <- data.frame(t(Results))
+return(Results[(nrow(Results)-4):(nrow(Results)),])
+}
+
+# returns a file with the averaged LOD-values, the standard deviation, the number of ANOVA-outcomes being significant (p 
+#< 0.05, uncorrected), the number of outcomes being significant ((p < 0.05, Bonferroni).
