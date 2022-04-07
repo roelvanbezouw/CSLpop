@@ -1,0 +1,15 @@
+ReverseBreeding<- function(D = CSL, prb = NULL) {
+	n <- 0
+	count <- 0
+	CSL <- D
+	Collection <- CSL[-(1:nrow(CSL)),]
+	while (n == 0) {
+		Par <- CSL[c(sample(1:(nrow(CSL)), 1, prob = prb, replace = TRUE)), ]
+		Collection <- rbind(Collection, Par)
+		for (i in 1:nrow(Collection)) {
+			X <- sum(abs(Par[,2:ncol(CSL)] - Collection[i,2:ncol(CSL)]))
+			if (X == (ncol(CSL)-1)) {n <- 1}
+	}
+}
+return(nrow(Collection))
+}
