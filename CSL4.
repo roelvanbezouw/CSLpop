@@ -1,0 +1,80 @@
+#CSL4. This function to extract sets of four from incomplete populations of CSLs. 
+#The output can be used to calculate the probably of these sets for any number of randomly selected CSLs.
+
+#### 	CSL4
+#
+# CHROMOSOMES;		Indicate the number of chromosomes of the plant.A compete CSL will be generated sized 2^Y
+# SAMPLEDRAW;		Size of the sample (X) drawn from the entire population (Y)
+# PERMUTATIONS; 		Number of sampledraws
+# NINTERACTIONS;		Determine the interactions you wish to screen a population for #Note; Does not work yet!
+
+####	Assumptions
+#
+#	No segregation distortion of chromosomes --> requires some model adjustments
+#	Parents are always included (e.g., for CHROMOSOMES = 4, Line1 is 0 0 0 0 and Line16 is 1 1 1 1)
+
+####	Output
+#
+#	Generates a list of the total number of "sets of four" present within a CSL population for each permutation
+
+CSL4 <- function(CHROMOSOMES, SAMPLEDRAW, PERMUTATIONS = 1000, NINTERACTIONS = 2) {
+
+	nChr<- CHROMOSOMES
+	nsubpop<- SAMPLEDRAW
+
+	if (!require(plyr)) {
+		install.packages("plyr")
+		require(plyr)
+	}
+	SimLib<- function(n) {
+		l <- rep(list(0:1), n)
+		Lines <- expand.grid(l)
+		LineNames<- function(n) {
+			Names = NULL
+			for (i in 1:n) {
+			Names <- append(Names, paste("C", i, sep = ""))
+				}
+			return(Names)
+		}
+		names(Lines) <- LineNames(ncol(Lines))
+		CSL <- c(1:nrow(Lines))
+		Lines <- data.frame(CSL, Lines)
+		return(Lines)
+	}
+	DrawIncCSL<- function(Lines, y = nrow(Lines)) {
+			n <- ncol(Lines)
+			Y <- ifelse(y > (nrow(Lines)-2), y <- (nrow(Lines)-2), round(y)) 
+			Select <- Lines[c(1, sample(2:(nrow(Lines)-1), Y, replace = FALSE), nrow(Lines)), ]
+			return(Select[order(Select$CSL),])
+	}
+	IntChr<- function(o) {
+		ChrNumber<- c(1:o)
+		Nint<- c()
+		for (i in ChrNumber) {
+			for (j in i:length(ChrNumber))
+				{if (i != j){
+					Nint<- append(Nint, list(c(i,j)))
+				}
+			}	
+		}
+		return(Nint)
+	}
+	INT <<- IntChr(nChr)
+	totCSLpop<<- SimLib(nChr)
+	ResultINT<- c()
+	for (i in 1:abs(PERMUTATIONS)) {
+		IntCount<<- 0
+		SLB <- DrawIncCSL(totCSLpop, nsubpop)
+		for (i in 1:length(INT)) {
+			Haplo<- do.call(paste, SLB[-1][-INT[[i]]]) 
+			df <- data.frame(Haplo)
+			SLBdf<- data.frame(SLB[-1][INT[[i]]], df) 
+			DetectInt<- ddply(SLBdf, c("Haplo"), summarise, N = length(Haplo))
+			if (any(DetectInt$N == 4)) {
+				IntCount<<- IntCount + 1
+			}
+		}
+		ResultINT<- append(ResultINT, IntCount)
+	}
+	return(ResultINT)
+}
